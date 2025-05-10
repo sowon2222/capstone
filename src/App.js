@@ -8,23 +8,26 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import SlideSummary from "./pages/SlideSummary";
 import ConceptMapPage from "./pages/ConceptMapPage";
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/slide-summary" element={<SlideSummary />} />
-          <Route path="/problems" element={<ProblemPage />} />
-          <Route path="/concept-map" element={<ConceptMapPage />} />
-          <Route path="/archive" element={<ArchivePage />} />
-          <Route path="/community" element={<CommunityPage />} />
-        </Route>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/slide-summary" element={<SlideSummary />} />
+            <Route path="/problems" element={<ProblemPage />} />
+            <Route path="/concept-map" element={<ConceptMapPage />} />
+            <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/community" element={<CommunityPage />} />
+          </Route>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 export default App;

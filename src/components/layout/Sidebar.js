@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, FileText, Archive, Users, PlusCircle } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { Button } from "../common/Button";
 
 const menuItems = [
   { label: "홈", icon: <Home />, path: "/" },
@@ -13,6 +15,30 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { collapsed, toggleSidebar } = useSidebar();
+  const { isAuthenticated, logout } = useAuth();
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      navigate("/login");
+    }
+  };
+
+  const handleNewChat = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    // 현재 홈 화면인 경우 새로고침
+    if (location.pathname === "/") {
+      window.location.reload();
+    } else {
+      // 다른 페이지인 경우 홈으로 이동
+      navigate("/");
+    }
+  };
 
   return (
     <aside
@@ -26,17 +52,15 @@ export default function Sidebar() {
         onClick={toggleSidebar}
         aria-label="사이드바 토글"
       >
-        {/* 아이콘 또는 화살표 */}
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           {collapsed ? (
-            // 펼치기(→)
             <path d="M7 5L13 10L7 15" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           ) : (
-            // 접기(←)
             <path d="M13 5L7 10L13 15" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           )}
         </svg>
       </button>
+
       {/* 로고 */}
       <div
         className={`mb-8 flex items-center h-16 cursor-pointer justify-center ${collapsed ? "w-full" : ""}`}
@@ -48,13 +72,18 @@ export default function Sidebar() {
           className={collapsed ? "h-16 w-26" : "h-full"}
         />
       </div>
+
       {/* New chat 버튼 */}
       <button
-        className={`h-12 bg-[#346aff] rounded-lg text-white font-medium mb-8 flex items-center justify-center gap-3 transition-all duration-200 ${collapsed ? "w-12 p-0 justify-center" : "w-full px-4"}`}
+        onClick={handleNewChat}
+        className={`h-12 bg-[#346aff] rounded-lg text-white font-medium mb-8 flex items-center justify-center gap-3 transition-all duration-200 hover:bg-[#2a55cc] ${
+          collapsed ? "w-12 p-0 justify-center" : "w-full px-4"
+        }`}
       >
         <PlusCircle className="w-5 h-5" />
         {!collapsed && "New chat"}
       </button>
+
       {/* 메뉴 */}
       <nav className="flex flex-col gap-2 w-full">
         {menuItems.map((item) => (
@@ -74,19 +103,24 @@ export default function Sidebar() {
           </button>
         ))}
       </nav>
-      {/* 하단 로그인/회원가입 */}
-      <div className="mt-auto w-full flex flex-col items-center">
+
+      {/* 하단 로그인/로그아웃 */}
+      <div className="mt-auto">
         <hr className={`my-6 border-[#333] w-full ${collapsed ? "hidden" : "block"}`} />
-        <button
+        <Button
+          onClick={handleAuthClick}
           className={`border text-white rounded-lg transition-colors ${
             collapsed
               ? "w-12 h-12 border-white hover:bg-white hover:text-[#18181b] mb-2"
               : "w-full h-12 border-white hover:bg-white hover:text-[#18181b]"
           }`}
-          onClick={() => navigate("/login")}
         >
-          {collapsed ? <Users className="w-5 h-5 mx-auto" /> : "로그인 / 회원가입"}
-        </button>
+          {collapsed ? (
+            <Users className="w-5 h-5 mx-auto" />
+          ) : (
+            isAuthenticated ? "로그아웃" : "로그인 / 회원가입"
+          )}
+        </Button>
       </div>
     </aside>
   );

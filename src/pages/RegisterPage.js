@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button";
 import { Card, CardContent } from "../components/common/Card";
@@ -6,9 +6,68 @@ import { Input } from "../components/common/Input";
 import { Separator } from "../components/common/Separator";
 import { FcGoogle } from "react-icons/fc";
 import { SiKakaotalk, SiNaver } from "react-icons/si";
+import { useAuth } from "../contexts/AuthContext";
+import { authService } from "../services/authService";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [formData, setFormData] = useState({
+    id: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
+    email: ""
+  });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    // 비밀번호 확인
+    if (formData.password !== formData.confirmPassword) {
+      setError("비밀번호가 일치하지 않습니다.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const userData = await authService.register({
+        id: formData.id,
+        password: formData.password,
+        name: formData.name,
+        email: formData.email
+      });
+      
+      await login(userData);
+      navigate("/");
+    } catch (error) {
+      setError(error.message || "회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialRegister = async (provider) => {
+    try {
+      const userData = await authService.socialAuth(provider, true);
+      await login(userData);
+      navigate("/");
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
   const socialLoginOptions = [
     {
@@ -42,7 +101,7 @@ export default function RegisterPage() {
         <Card className="w-[480px] bg-[#1a1a1a] rounded-lg shadow border-none">
           <CardContent className="p-0 flex flex-col items-center">
             {/* Header */}
-            <div className="w-full px-8 mt-8">
+            <div className="w-full px-8">
               <h2 className="text-2xl font-bold text-[#FFFFFF]">회원가입</h2>
               <p className="mt-2 text-base text-[#BBBBBB]">
                 회원가입 후 로그인 가능합니다
@@ -50,15 +109,52 @@ export default function RegisterPage() {
             </div>
 
             {/* Input Form */}
-            <div className="w-full px-8 mt-4 space-y-3">
+            <form onSubmit={handleSubmit} className="w-full px-8 mt-4 space-y-3">
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
               <Input
+                name="id"
                 className="h-[50px] px-4 py-3 bg-white rounded-[10px] border border-[#8abfff] text-[#4e4e4e] text-base"
-                placeholder="id"
+                placeholder="아이디"
+                value={formData.id}
+                onChange={handleChange}
+                disabled={isLoading}
               />
               <Input
+                name="password"
                 type="password"
                 className="h-[50px] px-4 py-3 bg-white rounded-[10px] border border-[#e6e6e6] text-[#4e4e4e] text-base"
-                placeholder="Password"
+                placeholder="비밀번호"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+              {/* <Input
+                name="confirmPassword"
+                type="password"
+                className="h-[50px] px-4 py-3 bg-white rounded-[10px] border border-[#e6e6e6] text-[#4e4e4e] text-base"
+                placeholder="비밀번호 확인"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                disabled={isLoading}
+              /> */}
+              <Input
+                name="name"
+                className="h-[50px] px-4 py-3 bg-white rounded-[10px] border border-[#e6e6e6] text-[#4e4e4e] text-base"
+                placeholder="이름"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+              <Input
+                name="email"
+                type="email"
+                className="h-[50px] px-4 py-3 bg-white rounded-[10px] border border-[#e6e6e6] text-[#4e4e4e] text-base"
+                placeholder="이메일"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isLoading}
               />
 
               <div className="flex items-center justify-center gap-2 mt-3">
@@ -71,10 +167,14 @@ export default function RegisterPage() {
                 </span>
               </div>
 
-              <Button className="w-full h-[45px] mt-3 bg-[#346aff] hover:bg-[#2a55cc] text-white text-base rounded-lg">
-                Sign up
+              <Button 
+                type="submit"
+                className="w-full h-[45px] mt-3 bg-[#346aff] hover:bg-[#2a55cc] text-white text-base rounded-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "회원가입 중..." : "회원가입"}
               </Button>
-            </div>
+            </form>
 
             {/* Divider */}
             <div className="w-full px-8 mt-4">
@@ -87,11 +187,13 @@ export default function RegisterPage() {
             </div>
 
             {/* Social Buttons */}
-            <div className="w-full px-8 mt-4 space-y-3 mb-3">
-              {socialLoginOptions.map((login, index) => (
+            <div className="w-full px-8 mt-4 space-y-3 ">
+              {socialLoginOptions.map((login) => (
                 <Button
                   key={login.name}
                   className={`w-full h-[45px] ${login.bgColor} hover:bg-opacity-90 rounded text-[#4e4e4e] text-sm justify-start px-4 border-none`}
+                  onClick={() => handleSocialRegister(login.name.toLowerCase())}
+                  disabled={isLoading}
                 >
                   <div className="flex items-center">
                     <span className="mr-4">{login.icon}</span>
