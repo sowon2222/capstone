@@ -25,8 +25,9 @@
   "revision": null,
   "target_modules": [
     "ff_proj",
+    "v",
     "q",
-    "v"
+    "k"
   ],
   "task_type": "SEQ_2_SEQ_LM",
   "trainable_token_indices": null,
